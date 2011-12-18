@@ -24,7 +24,6 @@
 using namespace std;
 using namespace cv;
 using namespace cvb;
-using namespace tbb;
 
 
 #define VISUALIZE 1
