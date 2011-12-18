@@ -5,12 +5,15 @@ find_package(OpenCV REQUIRED)
 
 include_directories( ${PROJECT_SOURCE_DIR} )
 
+include_directories( ${PROJECT_SOURCE_DIR}/blob_detection )
+add_subdirectory( blob_detection )
+
 set( CMAKE_CXX_FLAGS_DEBUG ON )
 set( CMAKE_CXX_FLAGS_RELEASE OFF )
 
 add_executable( ${PROJECT_NAME} main.cpp )
 
-target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} -lcvblob -lrand_gen -lcircdet -lgsl -lgslcblas -ltbb )
+target_link_libraries( ${PROJECT_NAME} blob_detection ${OpenCV_LIBS} -lcvblob -lrand_gen -lcircdet -lgsl -lgslcblas -ltbb )
 
 enable_testing()
 
