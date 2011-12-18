@@ -70,7 +70,10 @@ class BlobDetector
 	void read_img( Mat original );
 
 	// Process the image
-	CvBlobs proc_img();
+	CvBlob proc_img();
+
+	// Get the blob contour
+	vector< vector< unsigned int > > get_contour( CvBlob * blob );
 
 public:
 	// Constructor

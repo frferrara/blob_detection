@@ -55,7 +55,7 @@ void BlobDetector::read_img( Mat original )
 }
 
 // Process the image
-CvBlobs BlobDetector::proc_img()
+CvBlob BlobDetector::proc_img()
 {
 	// Convert original to HSV
 	cvCvtColor( &original, hsv, CV_BGR2HSV );
@@ -69,11 +69,51 @@ CvBlobs BlobDetector::proc_img()
 	// Blob detection
 	CvBlobs blobs;
 	cvLabel( filtered, label, blobs );
+	cvFilterByArea( blobs, 100, 100000 );
+	CvBlobs::iterator it = blobs.begin();
+	CvBlob * blob = it->second;
 
 #if VISUALIZE
 	// Copy the original image for the blob rendering
 	cvConvertScale( &original, frame, 1, 0 );
 #endif
-	return blobs;
+	return *blob;
+}
+
+// Get the blob contour
+vector< vector< unsigned int > > BlobDetector::get_contour( CvBlob * blob )
+{
+	// Vector for the contour
+	vector< vector< unsigned int > > blob_contour;
+
+	// Vector for a point
+	vector< unsigned int > blob_point;
+	blob_point.resize( 2 );
+
+	// First contour point
+	unsigned int x = blob->contour.startingPoint.x;
+	unsigned int y = blob->contour.startingPoint.y;
+
+	// First contour point
+	blob_point[ 0 ] = x;
+	blob_point[ 1 ] = y;
+
+	// Put the first contour point into the contour vector
+	blob_contour.push_back( blob_point );
+
+	for ( CvChainCodes::const_iterator it = blob->contour.chainCode.begin(); it != blob->contour.chainCode.end(); it++ )
+	{
+		// Move along the contour
+		x = x + cvChainCodeMoves[ *it ][ 0 ];
+		y = y + cvChainCodeMoves[ *it ][ 1 ];
+
+		// Contour point
+		blob_point[ 0 ] = x;
+		blob_point[ 1 ] = y;
+
+		// Put the contour point into the contour vector
+		blob_contour.push_back( blob_point );
+	}
+	return blob_contour;
 }
 }
