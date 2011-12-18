@@ -17,17 +17,8 @@
 #include <opencv2/opencv.hpp>
 #include <cvblob.h>
 
-// Histograms
-#include <gsl/gsl_histogram.h>
-#include <gsl/gsl_histogram2d.h>
-
-// Intel threading libs
-#include <tbb/parallel_for.h>
-#include <tbb/blocked_range.h>
-
-// Own libs
-#include <rand_gen.hpp>
-#include <circdet.hpp>
+// Multi threaded circle detection
+#include <mt_circdet.hpp>
 
 
 using namespace std;
@@ -66,6 +57,10 @@ class BlobDetector
 	// Parameters for the circle detection
 	unsigned int num_points, n;
 
+	// Histograms for the circle detection
+	gsl_histogram * hist_r;
+	gsl_histogram2d * hist__x_c;
+
 	// Read the image
 	void read_img( Mat original );
 
@@ -82,6 +77,9 @@ public:
 				  CvScalar hsv_max, \
 				  unsigned int num_points, \
 				  unsigned int n );
+
+	// Destructor
+	~BlobDetector(); // Delete all the pointer data
 };
 }
 

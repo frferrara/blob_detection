@@ -38,6 +38,14 @@ BlobDetector::BlobDetector( CvSize img_size, \
 	// Set up the filter mask
 	morph_kernel = cvCreateStructuringElementEx( 5, 5, 1, 1, CV_SHAPE_RECT, NULL );
 
+	// Allocate the histograms
+	hist_r = gsl_histogram_calloc_uniform( ( size_t )img_size.height, \
+										   0.0, ( double )img_size.height );
+	hist__x_c = gsl_histogram2d_calloc_uniform( ( size_t )img_size.width, \
+											    ( size_t )img_size.height, \
+											    0.0, ( double )img_size.width, \
+											    0.0, ( double )img_size.height );
+
 #if VISUALIZE
 	// Create windows
 	cvNamedWindow( "Original", CV_WINDOW_AUTOSIZE );
