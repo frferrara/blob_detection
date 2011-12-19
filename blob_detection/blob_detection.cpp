@@ -31,7 +31,7 @@ BlobDetector::BlobDetector( const CvSize & img_size, \
 	filtered = cvCreateImage( img_size, IPL_DEPTH_8U, 1 );
 	label = cvCreateImage( img_size, IPL_DEPTH_LABEL, 1 );
 
-#if VISUALIZE
+#if VISUALIZE || VISUALIZE_DET
 	frame = cvCreateImage( img_size, IPL_DEPTH_8U, 3 );
 #endif
 
@@ -46,12 +46,15 @@ BlobDetector::BlobDetector( const CvSize & img_size, \
 											    0.0, ( double )img_size.width, \
 											    0.0, ( double )img_size.height );
 
-#if VISUALIZE
 	// Create windows
+#if VISUALIZE
 	cvNamedWindow( "Original", CV_WINDOW_AUTOSIZE );
 	cvNamedWindow( "HSV", CV_WINDOW_AUTOSIZE );
 	cvNamedWindow( "Thresholded", CV_WINDOW_AUTOSIZE );
 	cvNamedWindow( "Filtered", CV_WINDOW_AUTOSIZE );
+#endif
+
+#if VISUALIZE || VISUALIZE_DET
 	cvNamedWindow( "Blobs", CV_WINDOW_AUTOSIZE );
 #endif
 }
@@ -73,12 +76,15 @@ BlobDetector::~BlobDetector()
 	gsl_histogram_free( hist_r );
 	gsl_histogram2d_free( hist__x_c );
 
-#if VISUALIZE
 	// Destroy the windows
+#if VISUALIZE
 	cvDestroyWindow( "Original" );
 	cvDestroyWindow( "HSV" );
 	cvDestroyWindow( "Thresholded" );
 	cvDestroyWindow( "Filtered" );
+#endif
+
+#if VISUALIZE || VISUALIZE_DET
 	cvDestroyWindow( "Blobs" );
 #endif
 }
@@ -177,19 +183,24 @@ void BlobDetector::draw( CvBlobs blobs, \
 		// Draw the circle on the images
 		cvCircle( frame, x_c, 1, color, -1, 8, 0 );
 		cvCircle( frame, x_c, ( int )r, color, 1, 8, 0 );
+
+#if VISUALIZE
 		cvCircle( filtered, x_c, 3, color, -1, 8, 0 );
 		cvCircle( filtered, x_c, ( int )r, color, 3, 8, 0 );
+#endif
 	}
 }
 
 // Show the images
 void BlobDetector::show_img()
 {
+#if VISUALIZE
 	// Show the images
 	cvShowImage( "Original", &original );
 	cvShowImage( "HSV", hsv );
 	cvShowImage( "Thresholded", thresholded );
 	cvShowImage( "Filtered", filtered );
+#endif
 	cvShowImage( "Blobs", frame );
 
 	// Wait
@@ -216,12 +227,12 @@ void BlobDetector::blob_detection( const Mat & original, \
 		// Detect the circle in the image
 		circdet( blob_contour, x_c, y_c, r );
 
-#if VISUALIZE
+#if VISUALIZE || VISUALIZE_DET
 		// Draw the blob and circle
 		draw( blobs, cvPoint( x_c, y_c ), r, cvScalar( 255.0, 0.0, 0.0 ) );
 #endif
 	}
-#if VISUALIZE
+#if VISUALIZE || VISUALIZE_DET
 	// Show the images
 	show_img();
 #endif
