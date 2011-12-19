@@ -26,7 +26,7 @@ using namespace cv;
 using namespace cvb;
 
 
-#define VISUALIZE 0
+#define VISUALIZE 1
 #define VISUALIZE_DET 1
 
 
@@ -38,10 +38,10 @@ class BlobDetector
 	CvSize img_size;
 
 	// HSV Thresholds
-	CvScalar hsv_min, hsv_max;
+	CvScalar hsv_min, hsv_min__ROI, hsv_max, hsv_max__ROI;
 
 	// Needed images
-	IplImage original;
+	IplImage original;//, hsvROI, thresholdedROI, filteredROI, frameROI, labelROI;
 	IplImage * hsv;
 	IplImage * thresholded;
 	IplImage * filtered;
@@ -58,11 +58,21 @@ class BlobDetector
 	gsl_histogram * hist_r;
 	gsl_histogram2d * hist__x_c;
 
+	// Image ROI
+	CvRect ROI;
+
+	// ROI flag
+	bool flag_ROI;
+
 	// Read the image
 	void read_img( const Mat & original );
 
 	// Process the image
 	CvBlobs proc_img();
+
+	// Process the image ROI
+	CvBlobs proc_roi( const IplImage & original, \
+					  const CvSize & ROI_size );
 
 	// Get the blob contour
 	vector< vector< unsigned int > > get_contour( CvBlob * blob );

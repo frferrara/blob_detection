@@ -46,6 +46,9 @@ BlobDetector::BlobDetector( const CvSize & img_size, \
 											    0.0, ( double )img_size.width, \
 											    0.0, ( double )img_size.height );
 
+	// Set the ROI flag
+	flag_ROI = false;
+
 	// Create windows
 #if VISUALIZE
 	cvNamedWindow( "Original", CV_WINDOW_AUTOSIZE );
@@ -111,6 +114,37 @@ CvBlobs BlobDetector::proc_img()
 	CvBlobs blobs;
 	cvLabel( filtered, label, blobs );
 	cvFilterByArea( blobs, 100, 100000 );
+
+	return blobs;
+}
+
+// Process the image ROI
+CvBlobs BlobDetector::proc_roi( const IplImage & original, \
+								const CvSize & ROI_size )
+{
+	// Convert original to HSV
+	IplImage * hsv_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 3 );
+	cvCvtColor( &original, hsv_roi, CV_BGR2HSV );
+
+	// Filter by color
+	IplImage * thresholded_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 1 );
+	cvInRangeS( hsv_roi, hsv_min, hsv_max, thresholded_roi );
+
+	// Filter the noise
+	IplImage * filtered_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 1 );
+	cvMorphologyEx( thresholded_roi, filtered_roi, NULL, morph_kernel, CV_MOP_OPEN, 1 );
+
+	// Blob detection
+	IplImage * label_roi = cvCreateImage( ROI_size, IPL_DEPTH_LABEL, 1 );
+	CvBlobs blobs;
+	cvLabel( filtered, label, blobs );
+	cvFilterByArea( blobs, 100, 100000 );
+
+	// Release the images
+	cvReleaseImage( &hsv_roi );
+	cvReleaseImage( &thresholded_roi );
+	cvReleaseImage( &filtered_roi );
+	cvReleaseImage( &label_roi );
 
 	return blobs;
 }
@@ -216,8 +250,25 @@ void BlobDetector::blob_detection( const Mat & original, \
 	// Read the image
 	read_img( original );
 
-	// Process the image
-	CvBlobs blobs = proc_img();
+	// Blobs
+	CvBlobs blobs;
+
+	if ( flag_ROI == true )
+	{
+		// Set the ROI
+		cvSetImageROI( &this->original, ROI );
+
+		// Initialize the new images
+		CvSize ROI_size = cvSize( ROI.width, ROI.height );
+
+		// Process the ROI
+		blobs = proc_roi( this->original, ROI_size );
+	}
+	else
+	{
+		// Process the image
+		blobs = proc_img();
+	}
 
 	if ( !blobs.empty() )
 	{
@@ -227,14 +278,31 @@ void BlobDetector::blob_detection( const Mat & original, \
 		// Detect the circle in the image
 		circdet( blob_contour, x_c, y_c, r );
 
+		// Get the image ROI
+		int side = 2 * r + 20;
+
+		ROI = cvRect( ( int )( x_c - r ) - 10, \
+					  ( int )( y_c - r ) - 10, \
+					  side, \
+					  side );
+
+		// Set the ROI flag
+		flag_ROI = true;
+
 #if VISUALIZE || VISUALIZE_DET
 		// Draw the blob and circle
-		draw( blobs, cvPoint( x_c, y_c ), r, cvScalar( 255.0, 0.0, 0.0 ) );
+		//draw( blobs, cvPoint( x_c, y_c ), r, cvScalar( 255.0, 0.0, 0.0 ) );
 #endif
 	}
+	else
+	{
+		// Set the ROI flag
+		flag_ROI = false;
+	}
+
 #if VISUALIZE || VISUALIZE_DET
 	// Show the images
-	show_img();
+	//show_img();
 #endif
 }
 }
