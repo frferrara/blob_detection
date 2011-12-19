@@ -13,7 +13,7 @@ namespace mt_circdet
 {
 // Constructor
 CircleDetector::CircleDetector( unsigned int num_points, \
-								vector< vector< unsigned int > > blob_contour, \
+								const vector< vector< unsigned int > > & blob_contour, \
 								gsl_histogram * hist_r, \
 								gsl_histogram2d * hist__x_c )
 {
