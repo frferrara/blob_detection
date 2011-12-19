@@ -11,6 +11,18 @@
 
 namespace mt_circdet
 {
+// Constructor
+CircleDetector::CircleDetector( unsigned int num_points, \
+								vector< vector< unsigned int > > blob_contour, \
+								gsl_histogram * hist_r, \
+								gsl_histogram2d * hist__x_c )
+{
+	this->num_points = num_points;
+	this->blob_contour = blob_contour;
+	this->hist_r = hist_r;
+	this->hist__x_c = hist__x_c;
+}
+
 // Multi-threading callback function
 void CircleDetector::operator()( const blocked_range< size_t > & r ) const
 {

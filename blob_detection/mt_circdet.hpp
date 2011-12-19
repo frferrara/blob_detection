@@ -40,6 +40,12 @@ class CircleDetector
 	gsl_histogram2d * hist__x_c;
 
 public:
+	// Constructor
+	CircleDetector( unsigned int num_points, \
+					vector< vector< unsigned int > > blob_contour, \
+					gsl_histogram * hist_r, \
+					gsl_histogram2d * hist__x_c );
+
 	// Multi-threading callback function
 	void operator()( const blocked_range< size_t > & r ) const;
 };
