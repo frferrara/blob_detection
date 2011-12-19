@@ -3,13 +3,13 @@ project( BlobDetection )
 
 find_package(OpenCV REQUIRED)
 
+set( CMAKE_CXX_FLAGS_DEBUG OFF )
+set( CMAKE_CXX_FLAGS_RELEASE ON )
+
 include_directories( ${PROJECT_SOURCE_DIR} )
 
 include_directories( ${PROJECT_SOURCE_DIR}/blob_detection )
 add_subdirectory( blob_detection )
-
-set( CMAKE_CXX_FLAGS_DEBUG ON )
-set( CMAKE_CXX_FLAGS_RELEASE OFF )
 
 add_executable( ${PROJECT_NAME} main.cpp )
 
