@@ -56,10 +56,37 @@ BlobDetector::BlobDetector( CvSize img_size, \
 #endif
 }
 
+// Destructor
+BlobDetector::~BlobDetector()
+{
+	// Release the images
+	cvReleaseImage( &hsv );
+	cvReleaseImage( &thresholded );
+	cvReleaseImage( &filtered );
+	cvReleaseImage( &frame );
+	cvReleaseImage( &label );
+
+	// Release the noise suppressing mask
+	cvReleaseStructuringElement( &morph_kernel );
+
+	// Release the histograms
+	gsl_histogram_free( hist_r );
+	gsl_histogram2d_free( hist__x_c );
+
+#if VISUALIZE
+	// Destroy the windows
+	cvDestroyWindow( "Original" );
+	cvDestroyWindow( "HSV" );
+	cvDestroyWindow( "Thresholded" );
+	cvDestroyWindow( "Filtered" );
+	cvDestroyWindow( "Blobs" );
+#endif
+}
+
 // Read the image
 void BlobDetector::read_img( Mat original )
 {
-	this->original = original;
+	this->original = ( IplImage )original;
 }
 
 // Process the image

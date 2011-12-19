@@ -78,7 +78,7 @@ public:
 				  unsigned int n );
 
 	// Destructor
-	~BlobDetector(); // Delete all the pointer data
+	~BlobDetector();
 };
 }
 
