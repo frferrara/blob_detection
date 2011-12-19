@@ -52,5 +52,9 @@ void get_circle( gsl_histogram * hist_r, \
 	// Get the maximum histogram values
 	r = gsl_histogram_max_bin( hist_r );
 	gsl_histogram2d_max_bin( hist__x_c, &x_c, &y_c );
+
+	// Reset the histograms
+	gsl_histogram_reset( hist_r );
+	gsl_histogram2d_reset( hist__x_c );
 }
 }
