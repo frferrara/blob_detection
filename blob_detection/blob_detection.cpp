@@ -287,11 +287,11 @@ void BlobDetector::blob_detection( const Mat & original, \
 					  side );
 
 		// Set the ROI flag
-		flag_ROI = true;
+		//flag_ROI = true;
 
 #if VISUALIZE || VISUALIZE_DET
 		// Draw the blob and circle
-		//draw( blobs, cvPoint( x_c, y_c ), r, cvScalar( 255.0, 0.0, 0.0 ) );
+		draw( blobs, cvPoint( x_c, y_c ), r, cvScalar( 255.0, 0.0, 0.0 ) );
 #endif
 	}
 	else
@@ -302,7 +302,7 @@ void BlobDetector::blob_detection( const Mat & original, \
 
 #if VISUALIZE || VISUALIZE_DET
 	// Show the images
-	//show_img();
+	show_img();
 #endif
 }
 }
