@@ -175,10 +175,10 @@ void BlobDetector::draw( CvBlobs blobs, \
 		cvRenderBlobs( label, blobs, frame, frame, CV_BLOB_RENDER_BOUNDING_BOX );
 
 		// Draw the circle on the images
-		cvCircle( &original, x_c, 3, color, -1, 8, 0 );
-		cvCircle( &original, x_c, ( int )r, color, 3, 8, 0 );
-		cvCircle( &thresholded, x_c, 3, color, -1, 8, 0 );
-		cvCircle( &thresholded, x_c, ( int )r, color, 3, 8, 0 );
+		cvCircle( frame, x_c, 1, color, -1, 8, 0 );
+		cvCircle( frame, x_c, ( int )r, color, 1, 8, 0 );
+		cvCircle( filtered, x_c, 3, color, -1, 8, 0 );
+		cvCircle( filtered, x_c, ( int )r, color, 3, 8, 0 );
 	}
 }
 
@@ -197,7 +197,10 @@ void BlobDetector::show_img()
 }
 
 // Blob detection
-void BlobDetector::blob_detection( const Mat & original )
+void BlobDetector::blob_detection( const Mat & original, \
+								   size_t & x_c, \
+								   size_t & y_c, \
+								   size_t & r )
 {
 	// Read the image
 	read_img( original );
@@ -211,7 +214,6 @@ void BlobDetector::blob_detection( const Mat & original )
 		vector< vector< unsigned int > > blob_contour = get_contour( blobs.begin()->second );
 
 		// Detect the circle in the image
-		size_t x_c, y_c, r;
 		circdet( blob_contour, x_c, y_c, r );
 
 #if VISUALIZE

@@ -96,7 +96,10 @@ public:
 	~BlobDetector();
 
 	// Blob detection
-	void blob_detection( const Mat & original );
+	void blob_detection( const Mat & original, \
+			   	   	     size_t & x_c, \
+			   	   	     size_t & y_c, \
+			   	   	     size_t & r );
 };
 }
 
