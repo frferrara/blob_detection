@@ -61,24 +61,42 @@ class BlobDetector
 	gsl_histogram2d * hist__x_c;
 
 	// Read the image
-	void read_img( Mat original );
+	void read_img( const Mat & original );
 
 	// Process the image
-	CvBlob proc_img();
+	CvBlobs proc_img();
 
 	// Get the blob contour
 	vector< vector< unsigned int > > get_contour( CvBlob * blob );
 
+	// Detect the circle in the image
+	void circdet( const vector< vector< unsigned int > > & blob_contour, \
+				  size_t & x_c, \
+				  size_t & y_c, \
+				  size_t & r );
+
+	// Draw the blob and circle
+	void draw( CvBlobs blobs, \
+			   const CvPoint & x_c, \
+			   const size_t & r, \
+			   const CvScalar & color );
+
+	// Show the images
+	void show_img();
+
 public:
 	// Constructor
-	BlobDetector( CvSize img_size, \
-				  CvScalar hsv_min, \
-				  CvScalar hsv_max, \
+	BlobDetector( const CvSize & img_size, \
+				  const CvScalar & hsv_min, \
+				  const CvScalar & hsv_max, \
 				  unsigned int num_points, \
 				  unsigned int n );
 
 	// Destructor
 	~BlobDetector();
+
+	// Blob detection
+	void blob_detection( const Mat & original );
 };
 }
 

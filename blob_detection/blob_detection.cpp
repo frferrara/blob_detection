@@ -12,9 +12,9 @@
 namespace blob_detection
 {
 // Constructor
-BlobDetector::BlobDetector( CvSize img_size, \
-							CvScalar hsv_min, \
-						  	CvScalar hsv_max, \
+BlobDetector::BlobDetector( const CvSize & img_size, \
+							const CvScalar & hsv_min, \
+						  	const CvScalar & hsv_max, \
 						  	unsigned int num_points, \
 						  	unsigned int n )
 {
@@ -84,13 +84,13 @@ BlobDetector::~BlobDetector()
 }
 
 // Read the image
-void BlobDetector::read_img( Mat original )
+void BlobDetector::read_img( const Mat & original )
 {
 	this->original = ( IplImage )original;
 }
 
 // Process the image
-CvBlob BlobDetector::proc_img()
+CvBlobs BlobDetector::proc_img()
 {
 	// Convert original to HSV
 	cvCvtColor( &original, hsv, CV_BGR2HSV );
@@ -105,14 +105,8 @@ CvBlob BlobDetector::proc_img()
 	CvBlobs blobs;
 	cvLabel( filtered, label, blobs );
 	cvFilterByArea( blobs, 100, 100000 );
-	CvBlobs::iterator it = blobs.begin();
-	CvBlob * blob = it->second;
 
-#if VISUALIZE
-	// Copy the original image for the blob rendering
-	cvConvertScale( &original, frame, 1, 0 );
-#endif
-	return *blob;
+	return blobs;
 }
 
 // Get the blob contour
@@ -150,5 +144,84 @@ vector< vector< unsigned int > > BlobDetector::get_contour( CvBlob * blob )
 		blob_contour.push_back( blob_point );
 	}
 	return blob_contour;
+}
+
+// Detect the circle in the image
+void BlobDetector::circdet( const vector< vector< unsigned int > > & blob_contour, \
+						    size_t & x_c, \
+			  	  	  	    size_t & y_c, \
+							size_t & r )
+{
+	// Multi-threaded circle detection
+	parallel_for( blocked_range< size_t >( 0, n ), \
+				  mt_circdet::CircleDetector( num_points, blob_contour, hist_r, hist__x_c ) );
+
+	// Get the circle
+	mt_circdet::get_circle( hist_r, hist__x_c, x_c, y_c, r );
+}
+
+// Draw the circle
+void BlobDetector::draw( CvBlobs blobs, \
+						 const CvPoint & x_c, \
+						 const size_t & r, \
+						 const CvScalar & color )
+{
+	// Copy the original image for the blob rendering
+	cvConvertScale( &original, frame, 1, 0 );
+
+	if ( !blobs.empty() )
+	{
+		// Render the blobs
+		cvRenderBlobs( label, blobs, frame, frame, CV_BLOB_RENDER_BOUNDING_BOX );
+
+		// Draw the circle on the images
+		cvCircle( &original, x_c, 3, color, -1, 8, 0 );
+		cvCircle( &original, x_c, ( int )r, color, 3, 8, 0 );
+		cvCircle( &thresholded, x_c, 3, color, -1, 8, 0 );
+		cvCircle( &thresholded, x_c, ( int )r, color, 3, 8, 0 );
+	}
+}
+
+// Show the images
+void BlobDetector::show_img()
+{
+	// Show the images
+	cvShowImage( "Original", &original );
+	cvShowImage( "HSV", hsv );
+	cvShowImage( "Thresholded", thresholded );
+	cvShowImage( "Filtered", filtered );
+	cvShowImage( "Blobs", frame );
+
+	// Wait
+	cvWaitKey( 10 );
+}
+
+// Blob detection
+void BlobDetector::blob_detection( const Mat & original )
+{
+	// Read the image
+	read_img( original );
+
+	// Process the image
+	CvBlobs blobs = proc_img();
+
+	if ( !blobs.empty() )
+	{
+		// Get the blob contour
+		vector< vector< unsigned int > > blob_contour = get_contour( blobs.begin()->second );
+
+		// Detect the circle in the image
+		size_t x_c, y_c, r;
+		circdet( blob_contour, x_c, y_c, r );
+
+#if VISUALIZE
+		// Draw the blob and circle
+		draw( blobs, cvPoint( x_c, y_c ), r, cvScalar( 255.0, 0.0, 0.0 ) );
+#endif
+	}
+#if VISUALIZE
+	// Show the images
+	show_img();
+#endif
 }
 }
