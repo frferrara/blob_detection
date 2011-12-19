@@ -51,9 +51,6 @@ class BlobDetector
 	// Noise suppressing mask
 	IplConvKernel * morph_kernel;
 
-	// Tracks for visualization
-	CvTracks tracks;
-
 	// Parameters for the circle detection
 	unsigned int num_points, n;
 
