@@ -78,6 +78,36 @@ void BlobDetector::read_img( const Mat & original )
 	this->original = original;
 }
 
+// Process the image ROI
+CvBlobs BlobDetector::proc_roi( const Mat & original_roi )
+{
+	// Convert original to HSV
+	Mat hsv_roi;
+	cvtColor( original_roi, hsv_roi, CV_BGR2HSV );
+
+	// Filter by color
+	Mat thresholded_roi;
+	inRange( hsv_roi, hsv_min, hsv_max, thresholded_roi );
+
+	// Filter the noise
+	Mat filtered_roi;
+	morphologyEx( thresholded_roi, filtered_roi, MORPH_OPEN, morph_kernel, Point( -1, -1 ), \
+				  1, BORDER_CONSTANT, morphologyDefaultBorderValue() );
+
+	// Create the needed images
+	IplImage filtered_roi__ipl = ( IplImage )filtered_roi;
+	IplImage * label_roi__ipl = cvCreateImage( cvSize( original_roi.cols, original_roi.rows ), IPL_DEPTH_LABEL, 1 );
+
+	// Blob detection
+	CvBlobs blobs;
+	cvLabel( &filtered_roi__ipl, label_roi__ipl, blobs );
+
+	// Release the label image
+	cvReleaseImage( &label_roi__ipl );
+
+	return blobs;
+}
+
 // Process the image
 CvBlobs BlobDetector::proc_img()
 {
@@ -101,41 +131,6 @@ CvBlobs BlobDetector::proc_img()
 
 	// Release the label image
 	cvReleaseImage( &label_ipl );
-
-	return blobs;
-}
-
-// Process the image ROI
-CvBlobs BlobDetector::proc_roi( const Mat & original_roi )
-{
-	// Convert original to HSV
-	Mat hsv_roi;
-	cvtColor( original_roi, hsv_roi, CV_BGR2HSV );
-
-	// Filter by color
-	Mat thresholded_roi;
-	inRange( hsv_roi, hsv_min, hsv_max, thresholded_roi );
-
-	// Filter the noise
-	Mat filtered_roi;
-	morphologyEx( thresholded_roi, filtered_roi, MORPH_OPEN, morph_kernel, Point( -1, -1 ), \
-				  1, BORDER_CONSTANT, morphologyDefaultBorderValue() );
-
-	// Blob detection
-	CvBlobs blobs;
-	IplImage filtered_roi__ipl = ( IplImage )filtered_roi;
-	IplImage * label_roi__ipl = cvCreateImage( cvSize( original_roi.cols, original_roi.rows ), IPL_DEPTH_LABEL, 1 );
-	cvLabel( &filtered_roi__ipl, label_roi__ipl, blobs );
-//	cvFilterByArea( blobs, 100, 100000 );
-//	cvLabel( filtered, label, blobs );
-//	cvFilterByArea( blobs, 100, 100000 );
-//
-//	// Release the images
-//	cvReleaseImage( &hsv_roi );
-//	cvReleaseImage( &thresholded_roi );
-//	cvReleaseImage( &filtered_roi );
-//	cvReleaseImage( &label_roi );
-	cvReleaseImage( &label_roi__ipl );
 
 	return blobs;
 }
@@ -191,20 +186,148 @@ void BlobDetector::circdet( const vector< vector< unsigned int > > & blob_contou
 	mt_circdet::get_circle( hist_r, hist__x_c, x_c, y_c, r );
 }
 
+// Detect with ROI
+bool BlobDetector::detect_roi( CvBlobs & blobs, \
+							   size_t & x_c, \
+							   size_t & y_c, \
+							   size_t & r )
+{
+	// Set the ROI
+	Mat original_roi = original( ROI );
+
+	// Process the ROI
+	blobs = proc_roi( original_roi );
+
+	if ( !blobs.empty() )
+	{
+		// Get the blob contour
+		vector< vector< unsigned int > > blob_contour = get_contour( blobs.begin()->second );
+
+		// Detect the circle in the image
+		circdet( blob_contour, x_c, y_c, r );
+
+		// Transform the ball center from ROI coordinates to image coordinates
+		x_c = x_c + ROI.x;
+		y_c = y_c + ROI.y;
+
+		// Get the new image ROI
+		int side = 2 * r + 20;
+		ROI = Rect( ( int )( x_c - r ) - 10, \
+					( int )( y_c - r ) - 10, \
+					side, \
+					side );
+
+		// Set the ROI flag
+		flag_ROI = true;
+	}
+	else
+	{
+		// Set the ROI flag
+		flag_ROI = false;
+	}
+	return flag_ROI;
+}
+
+// Detect without ROI
+bool BlobDetector::detect( CvBlobs & blobs, \
+						   size_t & x_c, \
+			 	 	 	   size_t & y_c, \
+			 	 	 	   size_t & r )
+{
+	// Process the image
+	blobs = proc_img();
+
+	if ( !blobs.empty() )
+	{
+		// Get the blob contour
+		vector< vector< unsigned int > > blob_contour = get_contour( blobs.begin()->second );
+
+		// Detect the circle in the image
+		circdet( blob_contour, x_c, y_c, r );
+
+		// Get the image ROI
+		int side = 2 * r + 20;
+		ROI = Rect( ( int )( x_c - r ) - 10, \
+					( int )( y_c - r ) - 10, \
+					side, \
+					side );
+
+		flag_ROI = true;
+	}
+	else
+	{
+		flag_ROI = false;
+	}
+	return flag_ROI;
+}
+
+// Transform the blobs from ROI to image coordinates
+void BlobDetector::transform_blobs( CvBlobs & blobs )
+{
+	// Iterate through the blobs
+	for ( CvBlobs::iterator b_it = blobs.begin(); b_it != blobs.end(); b_it++ )
+	{
+		// Move the centroid
+		b_it->second->centroid.x = b_it->second->centroid.x + ( double )ROI.x;
+		b_it->second->centroid.y = b_it->second->centroid.x + ( double )ROI.y;
+
+		// Move the bounding box
+		b_it->second->minx = b_it->second->minx + ( unsigned int )ROI.x;
+		b_it->second->miny = b_it->second->miny + ( unsigned int )ROI.y;
+		b_it->second->maxx = b_it->second->maxx + ( unsigned int )ROI.x;
+		b_it->second->maxy = b_it->second->maxy + ( unsigned int )ROI.y;
+	}
+}
+
+// Draw the blob and circle in the ROI
+void BlobDetector::draw_roi( CvBlobs blobs, \
+			   	   	   	     const Point & x_c, \
+			   	   	   	     const size_t & r, \
+			   	   	   	     const Scalar & color )
+{
+	// Transform the blobs from ROI to image coordinates
+	transform_blobs( blobs );
+
+	// Do some image copies
+	IplImage original_ipl = ( IplImage )original;
+	IplImage label_ipl = ( IplImage )label;
+	IplImage * frame_ipl = cvCloneImage( &original_ipl );
+
+	// Render the blobs
+	cvRenderBlobs( &label_ipl, blobs, frame_ipl, frame_ipl, CV_BLOB_RENDER_BOUNDING_BOX );
+
+	// Copy the blob image
+	frame = ( Mat )cvCloneImage( frame_ipl );
+
+	// Release the blob image that is not needed anymore
+	cvReleaseImage( &frame_ipl );
+
+	// Draw the circle on the image
+	circle( frame, x_c, 1, color, -1, 8, 0 );
+	circle( frame, x_c, ( int )r, color, 1, 8, 0 );
+
+	// Draw the ROI around the circle
+	rectangle( frame, ROI, Scalar( 0.0, 255.0, 0.0 ), 1, 8, 0 );
+}
+
 // Draw the circle
 void BlobDetector::draw( CvBlobs blobs, \
 						 const Point & x_c, \
 						 const size_t & r, \
 						 const Scalar & color )
 {
-	// Render the blobs
+	// Do some image copies
 	IplImage original_ipl = ( IplImage )original;
 	IplImage label_ipl = ( IplImage )label;
 	IplImage * frame_ipl = cvCloneImage( &original_ipl );
+
+	// Render the blobs
 	cvRenderBlobs( &label_ipl, blobs, frame_ipl, frame_ipl, CV_BLOB_RENDER_BOUNDING_BOX );
 
+	// Copy the blob image
 	frame = ( Mat )cvCloneImage( frame_ipl );
 
+	// Release the blob image that is not needed anymore
 	cvReleaseImage( &frame_ipl );
 
 	// Draw the circle on the images
@@ -228,23 +351,11 @@ void BlobDetector::show_img()
 	imshow( "Filtered", filtered );
 #endif
 
-#if VISUALIZE || VISUALIZE_DET
 	imshow( "Blobs", frame );
 
 	// Wait
 	cvWaitKey( 10 );
-#endif
 }
-
-// Detect with ROI
-//bool BlobDetector::detect_roi( size_t & x_c, \
-//							   size_t & y_c, \
-//							   size_t & r )
-//{
-//	// Set the ROI
-//	Mat original_roi = original( ROI );
-//}
-
 
 // Blob detection
 void BlobDetector::blob_detection( const Mat & original, \
@@ -255,58 +366,33 @@ void BlobDetector::blob_detection( const Mat & original, \
 	// Read the image
 	read_img( original );
 
-	// Blobs
-	CvBlobs blobs;
-
 	if ( flag_ROI == true )
 	{
-		// Set the ROI
-		Mat original_roi = this->original( ROI );
-
-		// Process the ROI
-		blobs = proc_roi( original_roi );
-	}
-	else
-	{
-		// Process the image
-		blobs = proc_img();
-	}
-
-	if ( !blobs.empty() )
-	{
-		// Get the blob contour
-		vector< vector< unsigned int > > blob_contour = get_contour( blobs.begin()->second );
-
-		// Detect the circle in the image
-		circdet( blob_contour, x_c, y_c, r );
-
-		// Transform the ball center from ROI coordinates to image coordinates
-		if ( flag_ROI == true )
-		{
-			x_c = x_c + ROI.x;
-			y_c = y_c + ROI.y;
-		}
-
-		// Get the image ROI
-		int side = 2 * r + 20;
-
-		ROI = Rect( ( int )( x_c - r ) - 10, \
-					( int )( y_c - r ) - 10, \
-					side, \
-					side );
-
-		// Set the ROI flag
-		flag_ROI = true;
+		// Detect with ROI
+		CvBlobs blobs;
+		flag_ROI = detect_roi( blobs, x_c, y_c, r );
 
 #if VISUALIZE || VISUALIZE_DET
-		// Draw the blob and circle
-		draw( blobs, Point( x_c, y_c ), r, Scalar( 255.0, 0.0, 0.0 ) );
+		if ( flag_ROI == true )
+		{
+			// Draw the blob and circle in the ROI
+			draw_roi( blobs, Point( x_c, y_c ), r, Scalar( 255.0, 0.0, 0.0 ) );
+		}
 #endif
 	}
 	else
 	{
-		// Set the ROI flag
-		flag_ROI = false;
+		// Detect without ROI
+		CvBlobs blobs;
+		flag_ROI = detect( blobs, x_c, y_c, r );
+
+#if VISUALIZE || VISUALIZE_DET
+		if ( flag_ROI == true )
+		{
+			// Draw the blob and circle
+			draw( blobs, Point( x_c, y_c ), r, Scalar( 255.0, 0.0, 0.0 ) );
+		}
+#endif
 	}
 
 #if VISUALIZE || VISUALIZE_DET

@@ -27,7 +27,7 @@ using namespace cvb;
 
 
 #define VISUALIZE 0
-#define VISUALIZE_DET 0
+#define VISUALIZE_DET 1
 
 
 namespace blob_detection
@@ -62,11 +62,23 @@ class BlobDetector
 	// Read the image
 	void read_img( const Mat & original );
 
-	// Process the image
-	CvBlobs proc_img();
+	// Detect with ROI
+	bool detect_roi( CvBlobs & blobs, \
+					 size_t & x_c, \
+					 size_t & y_c, \
+					 size_t & r );
+
+	// Detect without ROI
+	bool detect( CvBlobs & blobs, \
+				 size_t & x_c, \
+				 size_t & y_c, \
+				 size_t & r );
 
 	// Process the image ROI
 	CvBlobs proc_roi( const Mat & original_roi );
+
+	// Process the image
+	CvBlobs proc_img();
 
 	// Get the blob contour
 	vector< vector< unsigned int > > get_contour( CvBlob * blob );
@@ -76,6 +88,15 @@ class BlobDetector
 				  size_t & x_c, \
 				  size_t & y_c, \
 				  size_t & r );
+
+	// Transform the blobs from ROI to image coordinates
+	void transform_blobs( CvBlobs & blobs );
+
+	// Draw the blob and circle in the ROI
+	void draw_roi( CvBlobs blobs, \
+				   const Point & x_c, \
+				   const size_t & r, \
+				   const Scalar & color );
 
 	// Draw the blob and circle
 	void draw( CvBlobs blobs, \
