@@ -99,28 +99,34 @@ CvBlobs BlobDetector::proc_img()
 	label = ( Mat )( label_ipl );
 	cvFilterByArea( blobs, 100, 100000 );
 
+	// Release the label image
+	cvReleaseImage( &label_ipl );
+
 	return blobs;
 }
 
 // Process the image ROI
-//CvBlobs BlobDetector::proc_roi( const IplImage & original, \
-//								const CvSize & ROI_size )
-//{
-//	// Convert original to HSV
-//	IplImage * hsv_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 3 );
-//	cvCvtColor( &original, hsv_roi, CV_BGR2HSV );
-//
-//	// Filter by color
-//	IplImage * thresholded_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 1 );
-//	cvInRangeS( hsv_roi, hsv_min, hsv_max, thresholded_roi );
-//
-//	// Filter the noise
-//	IplImage * filtered_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 1 );
-//	cvMorphologyEx( thresholded_roi, filtered_roi, NULL, morph_kernel, CV_MOP_OPEN, 1 );
-//
-//	// Blob detection
-//	IplImage * label_roi = cvCreateImage( ROI_size, IPL_DEPTH_LABEL, 1 );
-//	CvBlobs blobs;
+CvBlobs BlobDetector::proc_roi( const Mat & original_roi )
+{
+	// Convert original to HSV
+	Mat hsv_roi;
+	cvtColor( original_roi, hsv_roi, CV_BGR2HSV );
+
+	// Filter by color
+	Mat thresholded_roi;
+	inRange( hsv_roi, hsv_min, hsv_max, thresholded_roi );
+
+	// Filter the noise
+	Mat filtered_roi;
+	morphologyEx( thresholded_roi, filtered_roi, MORPH_OPEN, morph_kernel, Point( -1, -1 ), \
+				  1, BORDER_CONSTANT, morphologyDefaultBorderValue() );
+
+	// Blob detection
+	CvBlobs blobs;
+	IplImage filtered_roi__ipl = ( IplImage )filtered_roi;
+	IplImage * label_roi__ipl = cvCreateImage( cvSize( original_roi.cols, original_roi.rows ), IPL_DEPTH_LABEL, 1 );
+	cvLabel( &filtered_roi__ipl, label_roi__ipl, blobs );
+//	cvFilterByArea( blobs, 100, 100000 );
 //	cvLabel( filtered, label, blobs );
 //	cvFilterByArea( blobs, 100, 100000 );
 //
@@ -129,9 +135,10 @@ CvBlobs BlobDetector::proc_img()
 //	cvReleaseImage( &thresholded_roi );
 //	cvReleaseImage( &filtered_roi );
 //	cvReleaseImage( &label_roi );
-//
-//	return blobs;
-//}
+	cvReleaseImage( &label_roi__ipl );
+
+	return blobs;
+}
 
 // Get the blob contour
 vector< vector< unsigned int > > BlobDetector::get_contour( CvBlob * blob )
@@ -229,6 +236,16 @@ void BlobDetector::show_img()
 #endif
 }
 
+// Detect with ROI
+//bool BlobDetector::detect_roi( size_t & x_c, \
+//							   size_t & y_c, \
+//							   size_t & r )
+//{
+//	// Set the ROI
+//	Mat original_roi = original( ROI );
+//}
+
+
 // Blob detection
 void BlobDetector::blob_detection( const Mat & original, \
 								   size_t & x_c, \
@@ -241,22 +258,19 @@ void BlobDetector::blob_detection( const Mat & original, \
 	// Blobs
 	CvBlobs blobs;
 
-//	if ( flag_ROI == true )
-//	{
-//		// Set the ROI
-//		cvSetImageROI( &this->original, ROI );
-//
-//		// Initialize the new images
-//		CvSize ROI_size = cvSize( ROI.width, ROI.height );
-//
-//		// Process the ROI
-//		blobs = proc_roi( this->original, ROI_size );
-//	}
-//	else
-//	{
+	if ( flag_ROI == true )
+	{
+		// Set the ROI
+		Mat original_roi = this->original( ROI );
+
+		// Process the ROI
+		blobs = proc_roi( original_roi );
+	}
+	else
+	{
 		// Process the image
 		blobs = proc_img();
-//	}
+	}
 
 	if ( !blobs.empty() )
 	{
@@ -266,16 +280,23 @@ void BlobDetector::blob_detection( const Mat & original, \
 		// Detect the circle in the image
 		circdet( blob_contour, x_c, y_c, r );
 
+		// Transform the ball center from ROI coordinates to image coordinates
+		if ( flag_ROI == true )
+		{
+			x_c = x_c + ROI.x;
+			y_c = y_c + ROI.y;
+		}
+
 		// Get the image ROI
 		int side = 2 * r + 20;
 
-		ROI = cvRect( ( int )( x_c - r ) - 10, \
-					  ( int )( y_c - r ) - 10, \
-					  side, \
-					  side );
+		ROI = Rect( ( int )( x_c - r ) - 10, \
+					( int )( y_c - r ) - 10, \
+					side, \
+					side );
 
 		// Set the ROI flag
-		//flag_ROI = true;
+		flag_ROI = true;
 
 #if VISUALIZE || VISUALIZE_DET
 		// Draw the blob and circle

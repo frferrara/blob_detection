@@ -66,8 +66,7 @@ class BlobDetector
 	CvBlobs proc_img();
 
 	// Process the image ROI
-	CvBlobs proc_roi( const Mat & original, \
-					  const Size & ROI_size );
+	CvBlobs proc_roi( const Mat & original_roi );
 
 	// Get the blob contour
 	vector< vector< unsigned int > > get_contour( CvBlob * blob );
