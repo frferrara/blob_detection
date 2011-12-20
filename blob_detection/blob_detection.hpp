@@ -26,8 +26,8 @@ using namespace cv;
 using namespace cvb;
 
 
-#define VISUALIZE 1
-#define VISUALIZE_DET 1
+#define VISUALIZE 0
+#define VISUALIZE_DET 0
 
 
 namespace blob_detection
@@ -35,21 +35,16 @@ namespace blob_detection
 class BlobDetector
 {
 	// Image size
-	CvSize img_size;
+	Size img_size;
 
 	// HSV Thresholds
-	CvScalar hsv_min, hsv_min__ROI, hsv_max, hsv_max__ROI;
+	Scalar hsv_min, hsv_min__ROI, hsv_max, hsv_max__ROI;
 
 	// Needed images
-	IplImage original;//, hsvROI, thresholdedROI, filteredROI, frameROI, labelROI;
-	IplImage * hsv;
-	IplImage * thresholded;
-	IplImage * filtered;
-	IplImage * frame;
-	IplImage * label;
+	Mat original, hsv, thresholded, filtered, frame, label;
 
 	// Noise suppressing mask
-	IplConvKernel * morph_kernel;
+	Mat morph_kernel;
 
 	// Parameters for the circle detection
 	unsigned int num_points, n;
@@ -59,7 +54,7 @@ class BlobDetector
 	gsl_histogram2d * hist__x_c;
 
 	// Image ROI
-	CvRect ROI;
+	Rect ROI;
 
 	// ROI flag
 	bool flag_ROI;
@@ -71,8 +66,8 @@ class BlobDetector
 	CvBlobs proc_img();
 
 	// Process the image ROI
-	CvBlobs proc_roi( const IplImage & original, \
-					  const CvSize & ROI_size );
+	CvBlobs proc_roi( const Mat & original, \
+					  const Size & ROI_size );
 
 	// Get the blob contour
 	vector< vector< unsigned int > > get_contour( CvBlob * blob );
@@ -85,18 +80,18 @@ class BlobDetector
 
 	// Draw the blob and circle
 	void draw( CvBlobs blobs, \
-			   const CvPoint & x_c, \
+			   const Point & x_c, \
 			   const size_t & r, \
-			   const CvScalar & color );
+			   const Scalar & color );
 
 	// Show the images
 	void show_img();
 
 public:
 	// Constructor
-	BlobDetector( const CvSize & img_size, \
-				  const CvScalar & hsv_min, \
-				  const CvScalar & hsv_max, \
+	BlobDetector( const Size & img_size, \
+				  const Scalar & hsv_min, \
+				  const Scalar & hsv_max, \
 				  unsigned int num_points, \
 				  unsigned int n );
 

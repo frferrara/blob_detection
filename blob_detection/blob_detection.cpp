@@ -12,9 +12,9 @@
 namespace blob_detection
 {
 // Constructor
-BlobDetector::BlobDetector( const CvSize & img_size, \
-							const CvScalar & hsv_min, \
-						  	const CvScalar & hsv_max, \
+BlobDetector::BlobDetector( const Size & img_size, \
+							const Scalar & hsv_min, \
+						  	const Scalar & hsv_max, \
 						  	unsigned int num_points, \
 						  	unsigned int n )
 {
@@ -25,18 +25,8 @@ BlobDetector::BlobDetector( const CvSize & img_size, \
 	this->num_points = num_points;
 	this->n = n;
 
-	// Preallocate the images
-	hsv = cvCreateImage( img_size, IPL_DEPTH_8U, 3 );
-	thresholded = cvCreateImage( img_size, IPL_DEPTH_8U, 1 );
-	filtered = cvCreateImage( img_size, IPL_DEPTH_8U, 1 );
-	label = cvCreateImage( img_size, IPL_DEPTH_LABEL, 1 );
-
-#if VISUALIZE || VISUALIZE_DET
-	frame = cvCreateImage( img_size, IPL_DEPTH_8U, 3 );
-#endif
-
 	// Set up the filter mask
-	morph_kernel = cvCreateStructuringElementEx( 5, 5, 1, 1, CV_SHAPE_RECT, NULL );
+	morph_kernel = getStructuringElement( CV_SHAPE_RECT, Size( 5, 5 ), Point( 1, 1 ) );
 
 	// Allocate the histograms
 	hist_r = gsl_histogram_calloc_uniform( ( size_t )img_size.height, \
@@ -51,103 +41,97 @@ BlobDetector::BlobDetector( const CvSize & img_size, \
 
 	// Create windows
 #if VISUALIZE
-	cvNamedWindow( "Original", CV_WINDOW_AUTOSIZE );
-	cvNamedWindow( "HSV", CV_WINDOW_AUTOSIZE );
-	cvNamedWindow( "Thresholded", CV_WINDOW_AUTOSIZE );
-	cvNamedWindow( "Filtered", CV_WINDOW_AUTOSIZE );
+	namedWindow( "Original", CV_WINDOW_AUTOSIZE );
+	namedWindow( "HSV", CV_WINDOW_AUTOSIZE );
+	namedWindow( "Thresholded", CV_WINDOW_AUTOSIZE );
+	namedWindow( "Filtered", CV_WINDOW_AUTOSIZE );
 #endif
 
 #if VISUALIZE || VISUALIZE_DET
-	cvNamedWindow( "Blobs", CV_WINDOW_AUTOSIZE );
+	namedWindow( "Blobs", CV_WINDOW_AUTOSIZE );
 #endif
 }
 
 // Destructor
 BlobDetector::~BlobDetector()
 {
-	// Release the images
-	cvReleaseImage( &hsv );
-	cvReleaseImage( &thresholded );
-	cvReleaseImage( &filtered );
-	cvReleaseImage( &frame );
-	cvReleaseImage( &label );
-
-	// Release the noise suppressing mask
-	cvReleaseStructuringElement( &morph_kernel );
-
 	// Release the histograms
 	gsl_histogram_free( hist_r );
 	gsl_histogram2d_free( hist__x_c );
 
 	// Destroy the windows
 #if VISUALIZE
-	cvDestroyWindow( "Original" );
-	cvDestroyWindow( "HSV" );
-	cvDestroyWindow( "Thresholded" );
-	cvDestroyWindow( "Filtered" );
+	destroyWindow( "Original" );
+	destroyWindow( "HSV" );
+	destroyWindow( "Thresholded" );
+	destroyWindow( "Filtered" );
 #endif
 
 #if VISUALIZE || VISUALIZE_DET
-	cvDestroyWindow( "Blobs" );
+	destroyWindow( "Blobs" );
 #endif
 }
 
 // Read the image
 void BlobDetector::read_img( const Mat & original )
 {
-	this->original = ( IplImage )original;
+	this->original = original;
 }
 
 // Process the image
 CvBlobs BlobDetector::proc_img()
 {
 	// Convert original to HSV
-	cvCvtColor( &original, hsv, CV_BGR2HSV );
+	cvtColor( original, hsv, CV_BGR2HSV );
 
 	// Filter by color
-	cvInRangeS( hsv, hsv_min, hsv_max, thresholded );
+	inRange( hsv, hsv_min, hsv_max, thresholded );
 
 	// Filter the noise
-	cvMorphologyEx( thresholded, filtered, NULL, morph_kernel, CV_MOP_OPEN, 1 );
+	morphologyEx( thresholded, filtered, MORPH_OPEN, morph_kernel, Point( -1, -1 ), \
+				  1, BORDER_CONSTANT, morphologyDefaultBorderValue() );
 
 	// Blob detection
 	CvBlobs blobs;
-	cvLabel( filtered, label, blobs );
+	IplImage filtered_ipl = ( IplImage )filtered;
+	IplImage * label_ipl = cvCreateImage( img_size, IPL_DEPTH_LABEL, 1 );
+	cvLabel( &filtered_ipl, label_ipl, blobs );
+	label = ( Mat )( label_ipl );
 	cvFilterByArea( blobs, 100, 100000 );
 
 	return blobs;
 }
 
 // Process the image ROI
-CvBlobs BlobDetector::proc_roi( const IplImage & original, \
-								const CvSize & ROI_size )
-{
-	// Convert original to HSV
-	IplImage * hsv_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 3 );
-	cvCvtColor( &original, hsv_roi, CV_BGR2HSV );
-
-	// Filter by color
-	IplImage * thresholded_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 1 );
-	cvInRangeS( hsv_roi, hsv_min, hsv_max, thresholded_roi );
-
-	// Filter the noise
-	IplImage * filtered_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 1 );
-	cvMorphologyEx( thresholded_roi, filtered_roi, NULL, morph_kernel, CV_MOP_OPEN, 1 );
-
-	// Blob detection
-	IplImage * label_roi = cvCreateImage( ROI_size, IPL_DEPTH_LABEL, 1 );
-	CvBlobs blobs;
-	cvLabel( filtered, label, blobs );
-	cvFilterByArea( blobs, 100, 100000 );
-
-	// Release the images
-	cvReleaseImage( &hsv_roi );
-	cvReleaseImage( &thresholded_roi );
-	cvReleaseImage( &filtered_roi );
-	cvReleaseImage( &label_roi );
-
-	return blobs;
-}
+//CvBlobs BlobDetector::proc_roi( const IplImage & original, \
+//								const CvSize & ROI_size )
+//{
+//	// Convert original to HSV
+//	IplImage * hsv_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 3 );
+//	cvCvtColor( &original, hsv_roi, CV_BGR2HSV );
+//
+//	// Filter by color
+//	IplImage * thresholded_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 1 );
+//	cvInRangeS( hsv_roi, hsv_min, hsv_max, thresholded_roi );
+//
+//	// Filter the noise
+//	IplImage * filtered_roi = cvCreateImage( ROI_size, IPL_DEPTH_8U, 1 );
+//	cvMorphologyEx( thresholded_roi, filtered_roi, NULL, morph_kernel, CV_MOP_OPEN, 1 );
+//
+//	// Blob detection
+//	IplImage * label_roi = cvCreateImage( ROI_size, IPL_DEPTH_LABEL, 1 );
+//	CvBlobs blobs;
+//	cvLabel( filtered, label, blobs );
+//	cvFilterByArea( blobs, 100, 100000 );
+//
+//	// Release the images
+//	cvReleaseImage( &hsv_roi );
+//	cvReleaseImage( &thresholded_roi );
+//	cvReleaseImage( &filtered_roi );
+//	cvReleaseImage( &label_roi );
+//
+//	return blobs;
+//}
 
 // Get the blob contour
 vector< vector< unsigned int > > BlobDetector::get_contour( CvBlob * blob )
@@ -202,27 +186,28 @@ void BlobDetector::circdet( const vector< vector< unsigned int > > & blob_contou
 
 // Draw the circle
 void BlobDetector::draw( CvBlobs blobs, \
-						 const CvPoint & x_c, \
+						 const Point & x_c, \
 						 const size_t & r, \
-						 const CvScalar & color )
+						 const Scalar & color )
 {
-	// Copy the original image for the blob rendering
-	cvConvertScale( &original, frame, 1, 0 );
+	// Render the blobs
+	IplImage original_ipl = ( IplImage )original;
+	IplImage label_ipl = ( IplImage )label;
+	IplImage * frame_ipl = cvCloneImage( &original_ipl );
+	cvRenderBlobs( &label_ipl, blobs, frame_ipl, frame_ipl, CV_BLOB_RENDER_BOUNDING_BOX );
 
-	if ( !blobs.empty() )
-	{
-		// Render the blobs
-		cvRenderBlobs( label, blobs, frame, frame, CV_BLOB_RENDER_BOUNDING_BOX );
+	frame = ( Mat )cvCloneImage( frame_ipl );
 
-		// Draw the circle on the images
-		cvCircle( frame, x_c, 1, color, -1, 8, 0 );
-		cvCircle( frame, x_c, ( int )r, color, 1, 8, 0 );
+	cvReleaseImage( &frame_ipl );
+
+	// Draw the circle on the images
+	circle( frame, x_c, 1, color, -1, 8, 0 );
+	circle( frame, x_c, ( int )r, color, 1, 8, 0 );
 
 #if VISUALIZE
-		cvCircle( filtered, x_c, 3, color, -1, 8, 0 );
-		cvCircle( filtered, x_c, ( int )r, color, 3, 8, 0 );
+	circle( filtered, x_c, 3, color, -1, 8, 0 );
+	circle( filtered, x_c, ( int )r, color, 3, 8, 0 );
 #endif
-	}
 }
 
 // Show the images
@@ -230,15 +215,18 @@ void BlobDetector::show_img()
 {
 #if VISUALIZE
 	// Show the images
-	cvShowImage( "Original", &original );
-	cvShowImage( "HSV", hsv );
-	cvShowImage( "Thresholded", thresholded );
-	cvShowImage( "Filtered", filtered );
+	imshow( "Original", original );
+	imshow( "HSV", hsv );
+	imshow( "Thresholded", thresholded );
+	imshow( "Filtered", filtered );
 #endif
-	cvShowImage( "Blobs", frame );
+
+#if VISUALIZE || VISUALIZE_DET
+	imshow( "Blobs", frame );
 
 	// Wait
 	cvWaitKey( 10 );
+#endif
 }
 
 // Blob detection
@@ -253,22 +241,22 @@ void BlobDetector::blob_detection( const Mat & original, \
 	// Blobs
 	CvBlobs blobs;
 
-	if ( flag_ROI == true )
-	{
-		// Set the ROI
-		cvSetImageROI( &this->original, ROI );
-
-		// Initialize the new images
-		CvSize ROI_size = cvSize( ROI.width, ROI.height );
-
-		// Process the ROI
-		blobs = proc_roi( this->original, ROI_size );
-	}
-	else
-	{
+//	if ( flag_ROI == true )
+//	{
+//		// Set the ROI
+//		cvSetImageROI( &this->original, ROI );
+//
+//		// Initialize the new images
+//		CvSize ROI_size = cvSize( ROI.width, ROI.height );
+//
+//		// Process the ROI
+//		blobs = proc_roi( this->original, ROI_size );
+//	}
+//	else
+//	{
 		// Process the image
 		blobs = proc_img();
-	}
+//	}
 
 	if ( !blobs.empty() )
 	{
@@ -291,7 +279,7 @@ void BlobDetector::blob_detection( const Mat & original, \
 
 #if VISUALIZE || VISUALIZE_DET
 		// Draw the blob and circle
-		draw( blobs, cvPoint( x_c, y_c ), r, cvScalar( 255.0, 0.0, 0.0 ) );
+		draw( blobs, Point( x_c, y_c ), r, Scalar( 255.0, 0.0, 0.0 ) );
 #endif
 	}
 	else
