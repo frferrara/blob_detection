@@ -366,6 +366,7 @@ void BlobDetector::blob_detection( const Mat & original, \
 	// Read the image
 	read_img( original );
 
+#if FLAG_ROI
 	if ( flag_ROI == true )
 	{
 		// Detect with ROI
@@ -394,6 +395,17 @@ void BlobDetector::blob_detection( const Mat & original, \
 		}
 #endif
 	}
+#else
+	// Detect without ROI
+	CvBlobs blobs;
+	if ( detect( blobs, x_c, y_c, r ) )
+	{
+#if VISUALIZE || VISUALIZE_DET
+		// Draw the blob and circle
+		draw( blobs, Point( x_c, y_c ), r, Scalar( 255.0, 0.0, 0.0 ) );
+#endif
+	}
+#endif
 
 #if VISUALIZE || VISUALIZE_DET
 	// Show the images

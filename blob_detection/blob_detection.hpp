@@ -27,7 +27,8 @@ using namespace cvb;
 
 
 #define VISUALIZE 0
-#define VISUALIZE_DET 1
+#define VISUALIZE_DET 0
+#define FLAG_ROI 1
 
 
 namespace blob_detection
