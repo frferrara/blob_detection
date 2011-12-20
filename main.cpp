@@ -37,9 +37,9 @@ int main( int argc, char * argv[] )
     unsigned int n = 100;
 
     // Blob detector
-    blob_detection::BlobDetector blob_detector( cvSize( original.cols, original.rows ), \
-    											cvScalar( h_min, s_min, v_min, 0.0 ), \
-    											cvScalar( h_max, s_max, v_max, 0.0 ), \
+    blob_detection::BlobDetector blob_detector( Size( original.cols, original.rows ), \
+    											Scalar( h_min, s_min, v_min, 0.0 ), \
+    											Scalar( h_max, s_max, v_max, 0.0 ), \
     											num_points, \
     											n );
 
@@ -61,12 +61,12 @@ int main( int argc, char * argv[] )
     	// Detect the ball
     	blob_detector.blob_detection( original, x_c, y_c, r );
 
+    	// Get the ticks
+    	end = clock();
+
     	/*cout << "x_c: " << x_c << \
     			", y_c: " << y_c << \
     			", r: " << r << endl;*/
-
-    	// Get the ticks
-    	end = clock();
 
     	// Calculate the time
     	T = ( double )( end - start ) / ( double )CLOCKS_PER_SEC;
