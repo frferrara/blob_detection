@@ -13,7 +13,7 @@ add_subdirectory( blob_detection )
 
 add_executable( ${PROJECT_NAME} main.cpp )
 
-target_link_libraries( ${PROJECT_NAME} blob_detection mt_circdet ${OpenCV_LIBS} -lcvblob -lrand_gen -lcircdet -lgsl -lgslcblas -ltbb )
+target_link_libraries( ${PROJECT_NAME} blob_detection )
 
 enable_testing()
 
