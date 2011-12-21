@@ -67,7 +67,7 @@ int main( int argc, char * argv[] )
 
     	// Detect the ball
     	//blob_detector.blob_detection( original, x_c, y_c, r );
-    	blob_detector->blob_detection( original, x_c, y_c, r );
+    	bool det = blob_detector->blob_detection( original, x_c, y_c, r );
 
     	// Get the ticks
     	end = clock();
@@ -89,7 +89,7 @@ int main( int argc, char * argv[] )
     			t_sum = t_sum + *it;
     		}
 
-    		cout << "Runtime: " << t_sum / 20.0 << endl;
+    		cout << det << ", Runtime: " << t_sum / 20.0 << endl;
 
     		t_sum = 0.0;
     		i = 0;
