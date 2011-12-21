@@ -5,7 +5,7 @@ find_package(OpenCV REQUIRED)
 
 set( CMAKE_CXX_FLAGS_DEBUG OFF )
 set( CMAKE_CXX_FLAGS_RELEASE ON )
-set( CMAKE_CXX_FLAGS "-Wall -g -pg" )
+#set( CMAKE_CXX_FLAGS "-Wall -g -pg" )
 
 include_directories( ${PROJECT_SOURCE_DIR} )
 
