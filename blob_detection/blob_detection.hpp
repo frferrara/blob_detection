@@ -122,6 +122,9 @@ public:
 	// Destructor
 	~BlobDetector();
 
+	// Get the ROI
+	Rect get_roi();
+
 	// Blob detection
 	void blob_detection( const Mat & original, \
 			   	   	     size_t & x_c, \

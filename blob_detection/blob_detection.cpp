@@ -72,6 +72,12 @@ BlobDetector::~BlobDetector()
 #endif
 }
 
+// Get the ROI
+Rect BlobDetector::get_roi()
+{
+	return ROI;
+}
+
 // Read the image
 void BlobDetector::read_img( const Mat & original )
 {
