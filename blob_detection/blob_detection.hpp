@@ -63,6 +63,9 @@ class BlobDetector
 	// Read the image
 	void read_img( const Mat & original );
 
+	// Set the roi
+	void set_roi();
+
 	// Detect with ROI
 	bool detect_roi( CvBlobs & blobs, \
 					 size_t & x_c, \

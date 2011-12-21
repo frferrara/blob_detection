@@ -186,6 +186,30 @@ void BlobDetector::circdet( const vector< vector< unsigned int > > & blob_contou
 	mt_circdet::get_circle( hist_r, hist__x_c, x_c, y_c, r );
 }
 
+// Set the roi
+void BlobDetector::set_roi()
+{
+	if ( ROI.x < 0 )
+	{
+		ROI.x = 0;
+	}
+
+	if ( ROI.x + ROI.width > img_size.width )
+	{
+		ROI.width = img_size.width - ROI.x;
+	}
+
+	if ( ROI.y < 0 )
+	{
+		ROI.y = 0;
+	}
+
+	if ( ROI.y + ROI.height > img_size.height )
+	{
+		ROI.height = img_size.height - ROI.y;
+	}
+}
+
 // Detect with ROI
 bool BlobDetector::detect_roi( CvBlobs & blobs, \
 							   size_t & x_c, \
@@ -216,6 +240,9 @@ bool BlobDetector::detect_roi( CvBlobs & blobs, \
 					( int )( y_c - r ) - 10, \
 					side, \
 					side );
+
+		// Set the roi
+		set_roi();
 
 		// Set the ROI flag
 		flag_ROI = true;
@@ -251,6 +278,9 @@ bool BlobDetector::detect( CvBlobs & blobs, \
 					( int )( y_c - r ) - 10, \
 					side, \
 					side );
+
+		// Set the roi
+		set_roi();
 
 		flag_ROI = true;
 	}
