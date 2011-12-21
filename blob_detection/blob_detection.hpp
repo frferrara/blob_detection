@@ -126,7 +126,7 @@ public:
 	Rect get_roi();
 
 	// Blob detection
-	void blob_detection( const Mat & original, \
+	bool blob_detection( const Mat & original, \
 			   	   	     size_t & x_c, \
 			   	   	     size_t & y_c, \
 			   	   	     size_t & r );

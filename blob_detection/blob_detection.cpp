@@ -394,7 +394,7 @@ void BlobDetector::show_img()
 }
 
 // Blob detection
-void BlobDetector::blob_detection( const Mat & original, \
+bool BlobDetector::blob_detection( const Mat & original, \
 								   size_t & x_c, \
 								   size_t & y_c, \
 								   size_t & r )
@@ -442,6 +442,8 @@ void BlobDetector::blob_detection( const Mat & original, \
 #endif
 	}
 #endif
+
+	return flag_ROI;
 
 #if VISUALIZE || VISUALIZE_DET
 	// Show the images
