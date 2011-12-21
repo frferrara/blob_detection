@@ -37,11 +37,18 @@ int main( int argc, char * argv[] )
     unsigned int n = 100;
 
     // Blob detector
-    blob_detection::BlobDetector blob_detector( Size( original.cols, original.rows ), \
+    /*blob_detection::BlobDetector blob_detector( Size( original.cols, original.rows ), \
     											Scalar( h_min, s_min, v_min, 0.0 ), \
     											Scalar( h_max, s_max, v_max, 0.0 ), \
     											num_points, \
-    											n );
+    											n );*/
+    blob_detection::BlobDetector * blob_detector = NULL;
+
+    blob_detector = new blob_detection::BlobDetector( Size( original.cols, original.rows ), \
+    										   	   	  Scalar( h_min, s_min, v_min, 0.0 ), \
+    										   	   	  Scalar( h_max, s_max, v_max, 0.0 ), \
+    										   	   	  num_points, \
+    										   	   	  n );
 
     // Runtime variables
     clock_t start, end;
@@ -59,7 +66,8 @@ int main( int argc, char * argv[] )
     	start = clock();
 
     	// Detect the ball
-    	blob_detector.blob_detection( original, x_c, y_c, r );
+    	//blob_detector.blob_detection( original, x_c, y_c, r );
+    	blob_detector->blob_detection( original, x_c, y_c, r );
 
     	// Get the ticks
     	end = clock();
