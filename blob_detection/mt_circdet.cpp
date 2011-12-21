@@ -37,7 +37,7 @@ void CircleDetector::operator()( const blocked_range< size_t > & r ) const
 		vector< double > rand_num = multi_uniGen( num_points, 0, ( double )blob_contour.size() - 1.0 );
 
 		// Get the randomly selected blob points
-		for ( int j = 0; j < num_points; j++ )
+		for ( int j = 0; j < ( int )num_points; j++ )
 		{
 			x( j, 0 ) = ( double )blob_contour[ ( int )round( rand_num[ j ] ) ][ 0 ];
 			x( j, 1 ) = ( double )blob_contour[ ( int )round( rand_num[ j ] ) ][ 1 ];
