@@ -390,7 +390,7 @@ void BlobDetector::show_img()
 	imshow( "Blobs", frame );
 
 	// Wait
-	cvWaitKey( 10 );
+	waitKey( 10 );
 }
 
 // Blob detection
@@ -443,11 +443,11 @@ bool BlobDetector::blob_detection( const Mat & original, \
 	}
 #endif
 
-	return flag_ROI;
-
 #if VISUALIZE || VISUALIZE_DET
 	// Show the images
 	show_img();
 #endif
+
+	return flag_ROI;
 }
 }
