@@ -374,7 +374,7 @@ void BlobDetector::draw( CvBlobs blobs, \
 	circle( frame, x_c, 1, color, -1, 8, 0 );
 	circle( frame, x_c, ( int )r, color, 1, 8, 0 );
 
-#if VISUALIZE && DRAW_THR
+#if VISUALIZE && DRAW_FIL
 	circle( filtered, x_c, 3, color, -1, 8, 0 );
 	circle( filtered, x_c, ( int )r, color, 3, 8, 0 );
 #endif
