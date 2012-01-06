@@ -329,8 +329,10 @@ void BlobDetector::draw_roi( CvBlobs blobs, \
 	IplImage label_ipl = ( IplImage )label;
 	IplImage * frame_ipl = cvCloneImage( &original_ipl );
 
+#if DRAW_BLOB
 	// Render the blobs
 	cvRenderBlobs( &label_ipl, blobs, frame_ipl, frame_ipl, CV_BLOB_RENDER_BOUNDING_BOX );
+#endif
 
 	// Copy the blob image
 	frame = ( Mat )cvCloneImage( frame_ipl );
@@ -357,8 +359,10 @@ void BlobDetector::draw( CvBlobs blobs, \
 	IplImage label_ipl = ( IplImage )label;
 	IplImage * frame_ipl = cvCloneImage( &original_ipl );
 
+#if DRAW_BLOB
 	// Render the blobs
 	cvRenderBlobs( &label_ipl, blobs, frame_ipl, frame_ipl, CV_BLOB_RENDER_BOUNDING_BOX );
+#endif
 
 	// Copy the blob image
 	frame = ( Mat )cvCloneImage( frame_ipl );
@@ -370,7 +374,7 @@ void BlobDetector::draw( CvBlobs blobs, \
 	circle( frame, x_c, 1, color, -1, 8, 0 );
 	circle( frame, x_c, ( int )r, color, 1, 8, 0 );
 
-#if VISUALIZE
+#if VISUALIZE && DRAW_THR
 	circle( filtered, x_c, 3, color, -1, 8, 0 );
 	circle( filtered, x_c, ( int )r, color, 3, 8, 0 );
 #endif
